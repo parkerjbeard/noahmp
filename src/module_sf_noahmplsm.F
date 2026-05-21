@@ -4639,18 +4639,19 @@ ENDIF   ! CROPTYPE == 0
     REAL    :: TMP12,TMP22,TMP32        !temporary calculation
 
     REAL    :: CMFM, CHFH, CM2FM2, CH2FH2
+    REAL    :: ZLVL_SAFE                !reference height guarded above displacement
 ! -------------------------------------------------------------------------------------------------
 ! Monin-Obukhov stability parameter moz for next iteration
 
     MOZOLD = MOZ
-  
-    IF(ZLVL <= ZPD) THEN
-       write(*,*) 'WARNING: critical problem: ZLVL <= ZPD; model stops'
-       call wrf_error_fatal("STOP in Noah-MP")
+
+    ZLVL_SAFE = ZLVL
+    IF(ZLVL_SAFE <= ZPD) THEN
+       ZLVL_SAFE = ZPD + MAX(Z0M, Z0H, 0.10)
     ENDIF
 
-    TMPCM = LOG((ZLVL-ZPD) / Z0M)
-    TMPCH = LOG((ZLVL-ZPD) / Z0H)
+    TMPCM = LOG((ZLVL_SAFE-ZPD) / Z0M)
+    TMPCH = LOG((ZLVL_SAFE-ZPD) / Z0H)
     TMPCM2 = LOG((2.0 + Z0M) / Z0M)
     TMPCH2 = LOG((2.0 + Z0H) / Z0H)
 
@@ -4664,7 +4665,7 @@ ENDIF   ! CROPTYPE == 0
        TMP1 = VKC * (GRAV/TVIR) * H/(RHOAIR*CPAIR)
        IF (ABS(TMP1) .LE. MPE) TMP1 = MPE
        MOL  = -1.0 * FV**3 / TMP1
-       MOZ  = MIN( (ZLVL-ZPD)/MOL, 1.0)
+       MOZ  = MIN( (ZLVL_SAFE-ZPD)/MOL, 1.0)
        MOZ2  = MIN( (2.0 + Z0H)/MOL, 1.0)
     ENDIF
 
@@ -12356,4 +12357,3 @@ RSURF_SNOW_TABLE     = RSURF_SNOW
   end subroutine read_mp_optional_parameters
 
 END MODULE NOAHMP_TABLES
-
