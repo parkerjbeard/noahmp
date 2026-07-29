@@ -647,28 +647,35 @@ CONTAINS
 ! for using soil update timestep difference from noahmp main timestep
     soil_update_steps = nint(soiltstep/DT)  ! 3600 = 1 hour
     soil_update_steps = max(soil_update_steps,1)
+! The accumulators are domain-shaped (ims:ime,jms:jme) but this routine only
+! owns its own tile, so the reset must be bounded by its:ite/jts:jte.  An
+! unsubscripted reset zeroes the whole domain from every call: with the
+! glacier sublane driving one 1x1 tile per land-ice column that is both a
+! large host memset and a correctness bug, because each call would wipe the
+! accumulation every earlier column had already contributed this step.  It is
+! also an OpenMP race whenever WRF runs more than one tile.
     if ( soil_update_steps == 1 ) then
-      ACC_SSOILXY  = 0.0
-      ACC_QINSURXY = 0.0
-      ACC_QSEVAXY  = 0.0
-      ACC_ETRANIXY = 0.0
-      ACC_DWATERXY = 0.0
-      ACC_PRCPXY   = 0.0
-      ACC_ECANXY   = 0.0
-      ACC_ETRANXY  = 0.0
-      ACC_EDIRXY   = 0.0
+      ACC_SSOILXY (its:ite,jts:jte)         = 0.0
+      ACC_QINSURXY(its:ite,jts:jte)         = 0.0
+      ACC_QSEVAXY (its:ite,jts:jte)         = 0.0
+      ACC_ETRANIXY(its:ite,1:NSOIL,jts:jte) = 0.0
+      ACC_DWATERXY(its:ite,jts:jte)         = 0.0
+      ACC_PRCPXY  (its:ite,jts:jte)         = 0.0
+      ACC_ECANXY  (its:ite,jts:jte)         = 0.0
+      ACC_ETRANXY (its:ite,jts:jte)         = 0.0
+      ACC_EDIRXY  (its:ite,jts:jte)         = 0.0
     end if
     if ( soil_update_steps > 1 ) then
      if ( mod(itimestep,soil_update_steps) == 1 ) then
-      ACC_SSOILXY  = 0.0
-      ACC_QINSURXY = 0.0
-      ACC_QSEVAXY  = 0.0
-      ACC_ETRANIXY = 0.0
-      ACC_DWATERXY = 0.0
-      ACC_PRCPXY   = 0.0
-      ACC_ECANXY   = 0.0
-      ACC_ETRANXY  = 0.0
-      ACC_EDIRXY   = 0.0
+      ACC_SSOILXY (its:ite,jts:jte)         = 0.0
+      ACC_QINSURXY(its:ite,jts:jte)         = 0.0
+      ACC_QSEVAXY (its:ite,jts:jte)         = 0.0
+      ACC_ETRANIXY(its:ite,1:NSOIL,jts:jte) = 0.0
+      ACC_DWATERXY(its:ite,jts:jte)         = 0.0
+      ACC_PRCPXY  (its:ite,jts:jte)         = 0.0
+      ACC_ECANXY  (its:ite,jts:jte)         = 0.0
+      ACC_ETRANXY (its:ite,jts:jte)         = 0.0
+      ACC_EDIRXY  (its:ite,jts:jte)         = 0.0
      end if
     end if
 
